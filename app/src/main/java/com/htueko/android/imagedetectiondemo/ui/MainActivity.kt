@@ -3,18 +3,25 @@ package com.htueko.android.imagedetectiondemo.ui
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.AsyncTask
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.htueko.android.imagedetectiondemo.R
+import com.htueko.android.imagedetectiondemo.data.Classifier
 import com.htueko.android.imagedetectiondemo.util.GET_IMAGE_FROM_GALLERY_REQUEST_CODE
 import com.htueko.android.imagedetectiondemo.util.PermissionObject
 import com.htueko.android.imagedetectiondemo.util.createImageFile
+import com.htueko.android.imagedetectiondemo.util.readBytes
 import com.yalantis.ucrop.UCrop
 import kotlinx.android.synthetic.main.content_main.*
+import java.io.ByteArrayOutputStream
 
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var classifier: Classifier
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +32,8 @@ class MainActivity : AppCompatActivity() {
         btn_gallery_main.setOnClickListener {
             requestAndGetTheImage()
         }
+
+        classifier = Classifier(assets)
 
     }
 
@@ -39,6 +48,8 @@ class MainActivity : AppCompatActivity() {
                 openCropActivity(sourceUri, destinationUri)
             } else if (requestCode == UCrop.REQUEST_CROP) {
                 val uri = UCrop.getOutput(data!!)
+                val byteArray = readBytes(this, uri!!)
+                something(byteArray!!)
                 showImage(uri!!)
             }
         } else {
@@ -47,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // check permission and act according to result
-    private fun requestAndGetTheImage(){
+    private fun requestAndGetTheImage() {
         PermissionObject.toCheckAndRequestPermissions(
             this,
             arrayOf(PermissionObject.READ_EXTERNAL_STORAGE_PERMISSION),
@@ -84,7 +95,17 @@ class MainActivity : AppCompatActivity() {
 
     // to show image
     private fun showImage(imageUri: Uri) {
-       Glide.with(this).load(imageUri).into(imv_placeholder_main)
+        Glide.with(this).load(imageUri).into(imv_placeholder_main)
+    }
+
+    private fun something(data: ByteArray){
+        AsyncTask.execute {
+            val recognitions = classifier.recognize(data)
+            val txt = recognitions.joinToString(separator = "\n")
+            runOnUiThread {
+                Toast.makeText(this, txt, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
 }

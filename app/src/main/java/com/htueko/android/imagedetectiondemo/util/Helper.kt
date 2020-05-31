@@ -1,6 +1,7 @@
 package com.htueko.android.imagedetectiondemo.util
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import java.io.File
@@ -34,3 +35,8 @@ fun createImageFile(context: Context): File? {
     }
     return file
 }
+
+
+@Throws(IOException::class)
+fun readBytes(context: Context, uri: Uri): ByteArray? =
+    context.contentResolver.openInputStream(uri)?.buffered()?.use { it.readBytes() }
